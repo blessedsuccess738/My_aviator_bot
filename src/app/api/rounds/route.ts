@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { verifyAuth } from '@/lib/auth'
-// Use prisma.Decimal from runtime
-const Decimal = require('@prisma/client/runtime').Decimal
 
 const roundSchema = z.object({
   roundId: z.string(),
