@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Validate source links
-      const sourceLinkIds = [...new Set(rounds.map(r => r.sourceLinkId).filter(Boolean))]
+      const sourceLinkIds = [...new Set(rounds.map(r => r.sourceLinkId).filter((id): id is string => Boolean(id)))]
       if (sourceLinkIds.length > 0) {
         const sourceLinks = await prisma.casinoLink.findMany({
           where: {
