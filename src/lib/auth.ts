@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { NextRequest } from 'next/server'
-import prisma from '@/lib/prisma'
+import { db } from '@/lib/simple-db'
 
 export interface AuthUser {
   userId: string
