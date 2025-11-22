@@ -97,10 +97,26 @@ export async function POST(request: NextRequest) {
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error)
+
+    // Handle specific errors
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { success: false, error: 'User already exists' },
+        { status: 400 }
+      )
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Registration failed' },
+      { success: false, error: error.message || 'Registration failed' },
       { status: 500 }
     )
   }
