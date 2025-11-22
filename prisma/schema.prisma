@@ -1,14 +1,103 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String   @id @default(cuid())
+  email                  String   @unique
+  passwordHash           String   @map("password_hash")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+  subscriptionTier       String   @default("free") @map("subscription_tier") // free, premium
+  subscriptionExpiresAt  DateTime? @map("subscription_expires_at")
+  apiKey                 String?  @unique @map("api_key")
+  emailVerified          Boolean  @default(false) @map("email_verified")
+  lastLogin              DateTime? @map("last_login")
+
+  // Relations
+  casinoLinks            CasinoLink[]
+  crashRounds            CrashRound[]
+  insights               Insight[]
+  sessions               Session[]
+
+  @@map("users")
+}
+
+model CasinoLink {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  name              String
+  url               String
+  isActive          Boolean  @default(true) @map("is_active")
+  fetchFrequency    Int      @default(60) @map("fetch_frequency") // minutes
+  lastFetch         DateTime? @map("last_fetch")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  encryptedCredentials String? @map("encrypted_credentials")
+
+  // Relations
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  crashRounds       CrashRound[]
+
+  @@map("casino_links")
+}
+
+model CrashRound {
+  id              String   @id @default(cuid())
+  roundId         String   @map("round_id")
+  multiplier      Decimal  @db.Decimal(4, 2)
+  crashTimestamp  DateTime @map("crash_timestamp")
+  sourceLinkId    String?  @map("source_link_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  indexedForSearch Boolean  @default(false) @map("indexed_for_search")
+
+  // Relations
+  sourceLink      CasinoLink? @relation(fields: [sourceLinkId], references: [id], onDelete: SetNull)
+
+  @@unique([roundId, sourceLinkId])
+  @@index([crashTimestamp])
+  @@index([sourceLinkId])
+  @@map("crash_rounds")
+}
+
+model Insight {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  windowSize    Int      @map("window_size") // 10, 20, 50 rounds
+  analysisData  Json     @map("analysis_data")
+  insightText   String   @map("insight_text")
+  riskLevel     String   @map("risk_level") // low, medium, high
+  createdAt     DateTime @default(now()) @map("created_at")
+  expiresAt     DateTime @map("expires_at")
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, windowSize])
+  @@index([expiresAt])
+  @@map("insights")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  lastUsed  DateTime @default(now()) @map("last_used")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@map("sessions")
 }
