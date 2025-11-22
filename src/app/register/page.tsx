@@ -37,6 +37,14 @@ export default function Register() {
         body: JSON.stringify({ email, password })
       })
 
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response:', text)
+        throw new Error('Server returned invalid response format')
+      }
+
       const data = await response.json()
 
       if (!response.ok) {
@@ -52,6 +60,7 @@ export default function Register() {
       router.push('/dashboard')
 
     } catch (error: any) {
+      console.error('Registration error:', error)
       setError(error.message || 'Registration failed')
     } finally {
       setLoading(false)
