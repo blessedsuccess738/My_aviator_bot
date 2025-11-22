@@ -12,7 +12,25 @@ const loginSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password } = loginSchema.parse(body)
+    let { email, password } = body
+
+    // Basic validation before Zod
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, error: 'Email and password are required' },
+        { status: 400 }
+      )
+    }
+
+    // Zod validation
+    try {
+      ({ email, password } = loginSchema.parse(body))
+    } catch (validationError: any) {
+      return NextResponse.json(
+        { success: false, error: validationError.errors?.[0]?.message || 'Invalid input data' },
+        { status: 400 }
+      )
+    }
 
     // Find user
     const user = await prisma.user.findUnique({
