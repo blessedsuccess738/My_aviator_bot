@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { verifyAuth } from '@/lib/auth'
-import { Decimal } from '@prisma/client/runtime/library'
+import { Decimal } from '@prisma/client'
 
 const roundSchema = z.object({
   roundId: z.string(),
