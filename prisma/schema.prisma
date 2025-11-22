@@ -5,10 +5,131 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  fullName      String?   @map("full_name")
+  phone         String?
+  bankName      String?   @map("bank_name")
+  accountNumber String?   @map("account_number")
+  accountName   String?   @map("account_name")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  wallet           Wallet[]
+  investments      UserInvestment[]
+  dailyEarnings    DailyEarning[]
+  couponUsages     CouponUsage[]
+  withdrawalRequests WithdrawalRequest[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id             String  @id @default(cuid())
+  userId         String  @unique @map("user_id")
+  balance        Decimal @default(0) @db.Decimal(10, 2)
+  totalDeposited Decimal @default(0) @db.Decimal(10, 2) @map("total_deposited")
+  totalWithdrawn Decimal @default(0) @db.Decimal(10, 2) @map("total_withdrawn")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+model InvestmentPlan {
+  id                String  @id @default(cuid())
+  name              String
+  price             Decimal @db.Decimal(10, 2)
+  durationDays      Int     @default(30) @map("duration_days")
+  dailyReturnRate   Decimal @default(0.40) @db.Decimal(5, 2) @map("daily_return_rate")
+  isActive          Boolean @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  investments UserInvestment[]
+
+  @@map("investment_plans")
+}
+
+model UserInvestment {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  planId                String    @map("plan_id")
+  purchasePrice         Decimal   @db.Decimal(10, 2) @map("purchase_price")
+  dailyEarning          Decimal   @db.Decimal(10, 2) @map("daily_earning")
+  totalExpectedReturn   Decimal   @db.Decimal(10, 2) @map("total_expected_return")
+  totalEarnedSoFar      Decimal   @default(0) @db.Decimal(10, 2) @map("total_earned_so_far")
+  startDate             DateTime  @default(now()) @map("start_date")
+  endDate               DateTime  @map("end_date")
+  daysRemaining         Int       @map("days_remaining")
+  isActive              Boolean   @default(true) @map("is_active")
+  lastEarningDate       DateTime? @map("last_earning_date")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          InvestmentPlan  @relation(fields: [planId], references: [id])
+  dailyEarnings DailyEarning[]
+
+  @@map("user_investments")
+}
+
+model DailyEarning {
+  id               String    @id @default(cuid())
+  userInvestmentId String    @map("user_investment_id")
+  userId           String    @map("user_id")
+  amount           Decimal   @db.Decimal(10, 2)
+  earningDate      DateTime  @default(now()) @map("earning_date")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  userInvestment UserInvestment @relation(fields: [userInvestmentId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("daily_earnings")
+}
+
+model CouponUsage {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  couponCode String   @map("coupon_code")
+  amount     Decimal  @db.Decimal(10, 2)
+  usedAt     DateTime @default(now()) @map("used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, couponCode])
+  @@map("coupon_usages")
+}
+
+model WithdrawalRequest {
+  id           String            @id @default(cuid())
+  userId       String            @map("user_id")
+  amount       Decimal           @db.Decimal(10, 2)
+  bankName     String            @map("bank_name")
+  accountNumber String           @map("account_number")
+  accountName  String            @map("account_name")
+  status       WithdrawalStatus  @default(PENDING)
+  processedAt  DateTime?         @map("processed_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawal_requests")
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
 }
