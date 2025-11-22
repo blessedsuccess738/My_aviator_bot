@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
       const createdRound = await prisma.crashRound.create({
         data: {
           roundId: round.roundId,
-          multiplier: new Decimal(round.multiplier),
+          multiplier: round.multiplier,
           crashTimestamp: new Date(round.crashTimestamp),
           sourceLinkId: round.sourceLinkId,
         }
