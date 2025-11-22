@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import prisma from '@/lib/prisma'
+import { db } from '@/lib/simple-db'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -33,10 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
-
+    const existingUser = await db.getUserByEmail(email)
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: 'User already exists' },
@@ -48,17 +45,10 @@ export async function POST(request: NextRequest) {
     const passwordHash = await bcrypt.hash(password, 12)
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-      },
-      select: {
-        id: true,
-        email: true,
-        subscriptionTier: true,
-        createdAt: true,
-      }
+    const user = await db.createUser({
+      email,
+      passwordHash,
+      subscriptionTier: 'free',
     })
 
     // Generate JWT token
@@ -80,18 +70,22 @@ export async function POST(request: NextRequest) {
     )
 
     // Store session
-    await prisma.session.create({
-      data: {
-        userId: user.id,
-        tokenHash: await bcrypt.hash(refreshToken, 12),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      }
+    const refreshTokenHash = await bcrypt.hash(refreshToken, 12)
+    await db.createSession({
+      userId: user.id,
+      tokenHash: refreshTokenHash,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     })
 
     return NextResponse.json({
       success: true,
       data: {
-        user,
+        user: {
+          id: user.id,
+          email: user.email,
+          subscriptionTier: user.subscriptionTier,
+          createdAt: user.createdAt,
+        },
         token,
         refreshToken,
       }
