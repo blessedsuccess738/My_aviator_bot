@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           amount: investment.dailyEarning
         })
       } else {
-        await tx.userInvestment.update({
+        await prisma.userInvestment.update({
           where: { id: investment.id },
           data: {
             isActive: false,
