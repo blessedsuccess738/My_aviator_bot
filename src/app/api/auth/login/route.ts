@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import prisma from '@/lib/prisma'
+import { db } from '@/lib/simple-db'
 import { z } from 'zod'
 
 const loginSchema = z.object({
@@ -33,10 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user
-    const user = await prisma.user.findUnique({
-      where: { email }
-    })
-
+    const user = await db.getUserByEmail(email)
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'Invalid credentials' },
@@ -54,10 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLogin: new Date() }
-    })
+    user.lastLogin = new Date()
 
     // Generate JWT token
     const token = jwt.sign(
@@ -78,12 +72,11 @@ export async function POST(request: NextRequest) {
     )
 
     // Store session
-    await prisma.session.create({
-      data: {
-        userId: user.id,
-        tokenHash: await bcrypt.hash(refreshToken, 12),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      }
+    const refreshTokenHash = await bcrypt.hash(refreshToken, 12)
+    await db.createSession({
+      userId: user.id,
+      tokenHash: refreshTokenHash,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     })
 
     return NextResponse.json({
@@ -100,10 +93,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { success: false, error: 'Login failed' },
+      { success: false, error: error.message || 'Login failed' },
       { status: 500 }
     )
   }
