@@ -36,9 +36,9 @@ model User {
 model Wallet {
   id             String  @id @default(cuid())
   userId         String  @unique @map("user_id")
-  balance        Decimal @default(0) @db.Decimal(10, 2)
-  totalDeposited Decimal @default(0) @db.Decimal(10, 2) @map("total_deposited")
-  totalWithdrawn Decimal @default(0) @db.Decimal(10, 2) @map("total_withdrawn")
+  balance        Float   @default(0)
+  totalDeposited Float   @default(0) @map("total_deposited")
+  totalWithdrawn Float   @default(0) @map("total_withdrawn")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -50,9 +50,9 @@ model Wallet {
 model InvestmentPlan {
   id                String  @id @default(cuid())
   name              String
-  price             Decimal @db.Decimal(10, 2)
+  price             Float
   durationDays      Int     @default(30) @map("duration_days")
-  dailyReturnRate   Decimal @default(0.40) @db.Decimal(5, 2) @map("daily_return_rate")
+  dailyReturnRate   Float   @default(0.40) @map("daily_return_rate")
   isActive          Boolean @default(true) @map("is_active")
   createdAt         DateTime @default(now()) @map("created_at")
 
@@ -65,10 +65,10 @@ model UserInvestment {
   id                    String    @id @default(cuid())
   userId                String    @map("user_id")
   planId                String    @map("plan_id")
-  purchasePrice         Decimal   @db.Decimal(10, 2) @map("purchase_price")
-  dailyEarning          Decimal   @db.Decimal(10, 2) @map("daily_earning")
-  totalExpectedReturn   Decimal   @db.Decimal(10, 2) @map("total_expected_return")
-  totalEarnedSoFar      Decimal   @default(0) @db.Decimal(10, 2) @map("total_earned_so_far")
+  purchasePrice         Float     @map("purchase_price")
+  dailyEarning          Float     @map("daily_earning")
+  totalExpectedReturn   Float     @map("total_expected_return")
+  totalEarnedSoFar      Float     @default(0) @map("total_earned_so_far")
   startDate             DateTime  @default(now()) @map("start_date")
   endDate               DateTime  @map("end_date")
   daysRemaining         Int       @map("days_remaining")
@@ -87,7 +87,7 @@ model DailyEarning {
   id               String    @id @default(cuid())
   userInvestmentId String    @map("user_investment_id")
   userId           String    @map("user_id")
-  amount           Decimal   @db.Decimal(10, 2)
+  amount           Float
   earningDate      DateTime  @default(now()) @map("earning_date")
   createdAt        DateTime  @default(now()) @map("created_at")
 
@@ -101,7 +101,7 @@ model CouponUsage {
   id         String   @id @default(cuid())
   userId     String   @map("user_id")
   couponCode String   @map("coupon_code")
-  amount     Decimal  @db.Decimal(10, 2)
+  amount     Float
   usedAt     DateTime @default(now()) @map("used_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -113,7 +113,7 @@ model CouponUsage {
 model WithdrawalRequest {
   id           String            @id @default(cuid())
   userId       String            @map("user_id")
-  amount       Decimal           @db.Decimal(10, 2)
+  amount       Float
   bankName     String            @map("bank_name")
   accountNumber String           @map("account_number")
   accountName  String            @map("account_name")
