@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             casinoLinks: true,
-            crashRounds: true,
           }
         }
       }
