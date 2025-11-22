@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         cached: false,
-        windowSize,
         ...analysis,
       }
     })
