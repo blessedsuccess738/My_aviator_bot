@@ -52,7 +52,7 @@ model CasinoLink {
 model CrashRound {
   id              String   @id @default(cuid())
   roundId         String   @map("round_id")
-  multiplier      Decimal  @db.Decimal(4, 2)
+  multiplier      Float
   crashTimestamp  DateTime @map("crash_timestamp")
   sourceLinkId    String?  @map("source_link_id")
   createdAt       DateTime @default(now()) @map("created_at")
