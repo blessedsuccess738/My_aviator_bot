@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       const createdRounds = await prisma.crashRound.createMany({
         data: rounds.map(round => ({
           roundId: round.roundId,
-          multiplier: new Decimal(round.multiplier),
+          multiplier: round.multiplier,
           crashTimestamp: new Date(round.crashTimestamp),
           sourceLinkId: round.sourceLinkId,
         })),
