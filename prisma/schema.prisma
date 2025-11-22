@@ -60,6 +60,7 @@ model CrashRound {
 
   // Relations
   sourceLink      CasinoLink? @relation(fields: [sourceLinkId], references: [id], onDelete: SetNull)
+  user            User?       @relation(fields: [sourceLinkId], references: [id], onDelete: SetNull)
 
   @@unique([roundId, sourceLinkId])
   @@index([crashTimestamp])
