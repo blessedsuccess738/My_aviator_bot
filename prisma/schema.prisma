@@ -23,7 +23,6 @@ model User {
 
   // Relations
   casinoLinks            CasinoLink[]
-  crashRounds            CrashRound[]
   insights               Insight[]
   sessions               Session[]
 
